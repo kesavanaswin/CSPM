@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "image": "webapp:1.2.0",
+      "container_id": "c001",
+      "vulnerabilities": [
+        {"cve": "CVE-2023-44487", "severity": "CRITICAL", "cvss": 9.8, "package": "nginx", "fixed": false},
+        {"cve": "CVE-2022-1234", "severity": "MEDIUM", "cvss": 5.3, "package": "libxml2", "fixed": true}
+      ]
+    },
+    {
+      "image": "auth-service:2.0.1",
+      "container_id": "c002",
+      "vulnerabilities": [
+        {"cve": "CVE-2021-44228", "severity": "CRITICAL", "cvss": 10.0, "package": "log4j", "fixed": false}
+      ]
+    },
+    {
+      "image": "internal-worker:0.9.4",
+      "container_id": "c003",
+      "vulnerabilities": [
+        {"cve": "CVE-2020-8558", "severity": "LOW", "cvss": 3.1, "package": "kube-proxy", "fixed": true}
+      ]
+    }
+  ]
+}

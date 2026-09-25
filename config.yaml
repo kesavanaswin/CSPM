@@ -1,0 +1,46 @@
+# CSPM Framework Configuration
+
+mode: demo   # "demo" (uses sample_data/) or "live" (calls real trivy/opa/falco)
+
+ingestion:
+  trivy:
+    binary_path: "trivy"
+    scan_on_pull: true
+    periodic_scan_hours: 24
+    delta_scan: true
+  falco:
+    socket_path: "/var/run/falco.sock"   # used only in live mode
+    log_path: "sample_data/falco_events.json"
+  k8s_audit:
+    log_path: "sample_data/k8s_audit.json"
+
+analysis:
+  opa:
+    server_url: "http://localhost:8181"
+    policy_dir: "policies/"
+  ml:
+    model: "isolation_forest"     # or "one_class_svm"
+    contamination: 0.05           # expected proportion of anomalies
+    min_samples_to_train: 20
+
+risk_engine:
+  # Risk = w1*V + w2*P + w3*E + w4*A + w5*(V*P*E)
+  weights:
+    vulnerability: 0.25
+    privilege: 0.15
+    exposure: 0.15
+    anomaly: 0.20
+    exploit_chain: 0.25
+  thresholds:
+    critical: 0.75
+    high: 0.55
+    medium: 0.35
+    # below medium => low
+
+mitigation:
+  alerting:
+    slack_webhook_url: ""     # fill in to enable Slack alerts
+    console_output: true
+  admission_controller:
+    enabled: false
+    block_threshold: 0.75     # block deployments scoring at/above this

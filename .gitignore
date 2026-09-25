@@ -1,0 +1,5 @@
+opa.exe 
+trivy.exe 
+venv
+__pycache__
+%SystemDrive%/

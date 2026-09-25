@@ -1,0 +1,43 @@
+{
+  "containers": [
+    {
+      "container_id": "c001",
+      "pod": "webapp-7d9f",
+      "namespace": "production",
+      "image": "webapp:1.2.0",
+      "runAsRoot": true,
+      "privileged": false,
+      "hostNetwork": true,
+      "hostPID": false,
+      "capabilities_added": ["NET_ADMIN"],
+      "resource_limits_set": false,
+      "exposure": "public_loadbalancer"
+    },
+    {
+      "container_id": "c002",
+      "pod": "auth-service-5c8b",
+      "namespace": "production",
+      "image": "auth-service:2.0.1",
+      "runAsRoot": true,
+      "privileged": true,
+      "hostNetwork": false,
+      "hostPID": false,
+      "capabilities_added": [],
+      "resource_limits_set": true,
+      "exposure": "cluster_internal"
+    },
+    {
+      "container_id": "c003",
+      "pod": "internal-worker-2a1e",
+      "namespace": "batch",
+      "image": "internal-worker:0.9.4",
+      "runAsRoot": false,
+      "privileged": false,
+      "hostNetwork": false,
+      "hostPID": false,
+      "capabilities_added": [],
+      "resource_limits_set": true,
+      "exposure": "internal_only"
+    }
+  ]
+}

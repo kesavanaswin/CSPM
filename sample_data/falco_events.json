@@ -1,0 +1,13 @@
+{
+  "events": [
+    {"container_id": "c001", "timestamp": "2026-07-17T09:00:01Z", "syscall_freq": {"open": 12, "connect": 2, "execve": 1, "write": 30}},
+    {"container_id": "c001", "timestamp": "2026-07-17T09:01:01Z", "syscall_freq": {"open": 14, "connect": 3, "execve": 1, "write": 28}},
+    {"container_id": "c001", "timestamp": "2026-07-17T09:02:01Z", "syscall_freq": {"open": 210, "connect": 40, "execve": 15, "write": 5}},
+    {"container_id": "c002", "timestamp": "2026-07-17T09:00:01Z", "syscall_freq": {"open": 8, "connect": 1, "execve": 0, "write": 5}},
+    {"container_id": "c002", "timestamp": "2026-07-17T09:01:01Z", "syscall_freq": {"open": 9, "connect": 1, "execve": 0, "write": 4}},
+    {"container_id": "c002", "timestamp": "2026-07-17T09:02:01Z", "syscall_freq": {"open": 10, "connect": 1, "execve": 0, "write": 6}},
+    {"container_id": "c003", "timestamp": "2026-07-17T09:00:01Z", "syscall_freq": {"open": 5, "connect": 0, "execve": 0, "write": 2}},
+    {"container_id": "c003", "timestamp": "2026-07-17T09:01:01Z", "syscall_freq": {"open": 4, "connect": 0, "execve": 0, "write": 3}},
+    {"container_id": "c003", "timestamp": "2026-07-17T09:02:01Z", "syscall_freq": {"open": 6, "connect": 0, "execve": 0, "write": 2}}
+  ]
+}

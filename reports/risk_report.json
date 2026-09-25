@@ -1,0 +1,61 @@
+{
+  "mode": "demo",
+  "ranked_findings": [
+    {
+      "container_id": "c001",
+      "pod": "webapp-7d9f",
+      "namespace": "production",
+      "image": "webapp:1.2.0",
+      "vulnerability_score": 0.0,
+      "worst_cve": null,
+      "privilege_score": 1.0,
+      "exposure_score": 1.0,
+      "anomaly_score": 1.0,
+      "opa_violations": [
+        "Container is running as root user",
+        "Container has no CPU/memory resource limits set",
+        "Container shares the host network namespace (hostNetwork=true)"
+      ],
+      "risk_score": 0.59,
+      "severity": "HIGH"
+    },
+    {
+      "container_id": "c002",
+      "pod": "auth-service-5c8b",
+      "namespace": "production",
+      "image": "auth-service:2.0.1",
+      "vulnerability_score": 0.0,
+      "worst_cve": null,
+      "privilege_score": 1.0,
+      "exposure_score": 0.6,
+      "anomaly_score": 1.0,
+      "opa_violations": [
+        "Container is running in privileged mode",
+        "Container is running as root user"
+      ],
+      "risk_score": 0.5,
+      "severity": "MEDIUM"
+    },
+    {
+      "container_id": "c003",
+      "pod": "internal-worker-2a1e",
+      "namespace": "batch",
+      "image": "internal-worker:0.9.4",
+      "vulnerability_score": 0.0,
+      "worst_cve": null,
+      "privilege_score": 0.1,
+      "exposure_score": 0.1,
+      "anomaly_score": 0.195,
+      "opa_violations": [],
+      "risk_score": 0.069,
+      "severity": "LOW"
+    }
+  ],
+  "attack_paths": [
+    [
+      "c001",
+      "c002"
+    ]
+  ],
+  "alerts_sent": 1
+}

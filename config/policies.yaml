@@ -1,0 +1,74 @@
+# config/policies.yaml
+#
+# Policy-as-Code rule set. Each rule mimics an OPA/Rego constraint:
+# a condition against the container's static configuration, a severity,
+# and a human-readable description. The Analysis Engine evaluates every
+# container config against every applicable rule.
+#
+# "environments" restricts a rule to specific deployment environments,
+# implementing the "dynamic policy-as-code generator" idea: production
+# workloads are held to stricter standards than development ones.
+
+rules:
+  - id: POL-001
+    field: privileged
+    operator: equals
+    value: true
+    severity: CRITICAL
+    description: "Container is running in privileged mode, granting full host access."
+    environments: [production, staging, development]
+
+  - id: POL-002
+    field: run_as_root
+    operator: equals
+    value: true
+    severity: HIGH
+    description: "Container process executes as root user."
+    environments: [production, staging]
+
+  - id: POL-003
+    field: host_network
+    operator: equals
+    value: true
+    severity: HIGH
+    description: "Container shares the host's network namespace (hostNetwork)."
+    environments: [production, staging, development]
+
+  - id: POL-004
+    field: host_pid
+    operator: equals
+    value: true
+    severity: HIGH
+    description: "Container shares the host's PID namespace (hostPID)."
+    environments: [production, staging, development]
+
+  - id: POL-005
+    field: cpu_limit
+    operator: is_empty
+    value: true
+    severity: MEDIUM
+    description: "No CPU resource limit defined; container can exhaust host resources."
+    environments: [production]
+
+  - id: POL-006
+    field: memory_limit
+    operator: is_empty
+    value: true
+    severity: MEDIUM
+    description: "No memory resource limit defined; container can exhaust host resources."
+    environments: [production]
+
+  - id: POL-007
+    field: exposed_publicly
+    operator: equals
+    value: true
+    severity: MEDIUM
+    description: "Container is publicly exposed to the internet, increasing attack surface."
+    environments: [production, staging, development]
+
+# Environment-based scoring multipliers used by the Risk Engine's
+# exposure calculation (production workloads carry more real-world risk).
+environment_multipliers:
+  production: 1.2
+  staging: 1.0
+  development: 0.8

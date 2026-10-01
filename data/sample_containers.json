@@ -1,0 +1,67 @@
+[
+  {
+    "container_id": "c-web-frontend-01",
+    "image": "nginx:1.21-alpine",
+    "namespace": "web",
+    "privileged": false,
+    "run_as_root": false,
+    "host_network": false,
+    "host_pid": false,
+    "cpu_limit": "500m",
+    "memory_limit": "256Mi",
+    "exposed_publicly": true,
+    "environment": "production"
+  },
+  {
+    "container_id": "c-payment-service-02",
+    "image": "internal/payments:2.3.0",
+    "namespace": "finance",
+    "privileged": true,
+    "run_as_root": true,
+    "host_network": false,
+    "host_pid": false,
+    "cpu_limit": null,
+    "memory_limit": null,
+    "exposed_publicly": true,
+    "environment": "production"
+  },
+  {
+    "container_id": "c-logging-agent-03",
+    "image": "fluentd:v1.14",
+    "namespace": "kube-system",
+    "privileged": false,
+    "run_as_root": true,
+    "host_network": true,
+    "host_pid": true,
+    "cpu_limit": "200m",
+    "memory_limit": "128Mi",
+    "exposed_publicly": false,
+    "environment": "production"
+  },
+  {
+    "container_id": "c-dev-sandbox-04",
+    "image": "python:3.11-slim",
+    "namespace": "dev",
+    "privileged": false,
+    "run_as_root": true,
+    "host_network": false,
+    "host_pid": false,
+    "cpu_limit": null,
+    "memory_limit": null,
+    "exposed_publicly": false,
+    "environment": "development"
+  },
+  {
+    "container_id": "c-redis-cache-05",
+    "image": "redis:7.0",
+    "namespace": "data",
+    "privileged": false,
+    "run_as_root": false,
+    "host_network": false,
+    "host_pid": false,
+    "cpu_limit": "250m",
+    "memory_limit": "512Mi",
+    "exposed_publicly": false,
+    "environment": "production"
+  }
+]

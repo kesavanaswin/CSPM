@@ -1,0 +1,24 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Local databases and runtime outputs
+*.db
+cspm.db
+logs/
+output/
+
+# Local Windows artifact folders
+%SystemDrive%/
+
+# OS and editor noise
+.DS_Store
+Thumbs.db

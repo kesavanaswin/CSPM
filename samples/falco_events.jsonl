@@ -1,0 +1,9 @@
+{"rule": "Write below binary dir", "priority": "Warning", "output_fields": {"container.name": "web-frontend"}, "output": "File below /bin opened for writing"}
+{"rule": "Write below binary dir", "priority": "Warning", "output_fields": {"container.name": "web-frontend"}, "output": "File below /bin opened for writing"}
+{"rule": "Read sensitive file", "priority": "Notice", "output_fields": {"container.name": "web-frontend"}, "output": "Sensitive file opened for reading"}
+{"rule": "Read sensitive file", "priority": "Notice", "output_fields": {"container.name": "api-backend"}, "output": "Sensitive file opened for reading"}
+{"rule": "Read sensitive file", "priority": "Notice", "output_fields": {"container.name": "api-backend"}, "output": "Sensitive file opened for reading"}
+{"rule": "Terminal shell in container", "priority": "Critical", "output_fields": {"container.name": "api-backend"}, "output": "A shell was spawned in a container with an attached terminal"}
+{"rule": "Read sensitive file", "priority": "Notice", "output_fields": {"container.name": "auth-service"}, "output": "Sensitive file opened for reading"}
+{"rule": "Read sensitive file", "priority": "Notice", "output_fields": {"container.name": "auth-service"}, "output": "Sensitive file opened for reading"}
+{"rule": "Read sensitive file", "priority": "Notice", "output_fields": {"container.name": "auth-service"}, "output": "Sensitive file opened for reading"}

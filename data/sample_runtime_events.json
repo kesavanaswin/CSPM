@@ -1,0 +1,18 @@
+[
+  {"container_id": "c-web-frontend-01", "event_type": "network_connect", "detail": "outbound connection to 93.184.216.34:443", "syscall": "connect", "timestamp": "2026-09-15T09:00:01Z", "suspicious": false},
+  {"container_id": "c-web-frontend-01", "event_type": "file_write", "detail": "write to /var/log/nginx/access.log", "syscall": "write", "timestamp": "2026-09-15T09:00:02Z", "suspicious": false},
+
+  {"container_id": "c-payment-service-02", "event_type": "process_spawn", "detail": "spawned /bin/sh inside container", "syscall": "execve", "timestamp": "2026-09-15T09:01:01Z", "suspicious": true},
+  {"container_id": "c-payment-service-02", "event_type": "file_write", "detail": "unexpected write to /etc/passwd", "syscall": "write", "timestamp": "2026-09-15T09:01:05Z", "suspicious": true},
+  {"container_id": "c-payment-service-02", "event_type": "network_connect", "detail": "outbound connection to 185.220.101.7:4444 (known malicious IP)", "syscall": "connect", "timestamp": "2026-09-15T09:01:10Z", "suspicious": true},
+  {"container_id": "c-payment-service-02", "event_type": "network_connect", "detail": "outbound connection to 10.0.4.5:5432", "syscall": "connect", "timestamp": "2026-09-15T09:01:12Z", "suspicious": false},
+
+  {"container_id": "c-logging-agent-03", "event_type": "file_write", "detail": "write to /var/log/fluentd/buffer", "syscall": "write", "timestamp": "2026-09-15T09:02:01Z", "suspicious": false},
+  {"container_id": "c-logging-agent-03", "event_type": "process_spawn", "detail": "spawned /usr/bin/tail", "syscall": "execve", "timestamp": "2026-09-15T09:02:03Z", "suspicious": false},
+
+  {"container_id": "c-dev-sandbox-04", "event_type": "process_spawn", "detail": "spawned /bin/bash interactively", "syscall": "execve", "timestamp": "2026-09-15T09:03:01Z", "suspicious": false},
+  {"container_id": "c-dev-sandbox-04", "event_type": "file_write", "detail": "write to /home/dev/scratch.py", "syscall": "write", "timestamp": "2026-09-15T09:03:05Z", "suspicious": false},
+
+  {"container_id": "c-redis-cache-05", "event_type": "network_connect", "detail": "inbound connection from 10.0.1.9:51322", "syscall": "accept", "timestamp": "2026-09-15T09:04:01Z", "suspicious": false},
+  {"container_id": "c-redis-cache-05", "event_type": "file_write", "detail": "write to /data/dump.rdb", "syscall": "write", "timestamp": "2026-09-15T09:04:10Z", "suspicious": false}
+]

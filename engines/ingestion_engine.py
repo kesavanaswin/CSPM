@@ -23,7 +23,7 @@ import os
 import queue
 import threading
 import time
-from typing import List, Dict, Any, Generator
+from typing import List, Dict, Generator
 
 from storage.json_store import JSONStore
 from utils.logger import get_logger
@@ -78,26 +78,41 @@ class IngestionEngine:
         delay: float = 0.0,
         follow: bool = False,
         poll_interval: float = 0.25,
+        max_wait: float = None,
     ) -> Generator[RuntimeEvent, None, None]:
         """
         Yield RuntimeEvent objects from the runtime telemetry source.
 
         By default this replays the static JSON fixture once. When ``follow=True``
-        it tails the log file and emits newly appended events in near real time,
-        which matches the behavior of a live eBPF/Falco pipeline.
+it reads any existing events first, then tails the file and emits newly
+        appended events in near real time, which matches the behavior of a live
+        eBPF/Falco pipeline.
         """
         if not os.path.exists(self.runtime_path):
             logger.warning(f"Runtime events file not found: {self.runtime_path}")
             return
 
+        def _parse_event(raw_line: str):
+            line = raw_line.strip()
+            if not line:
+                return None
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError:
+                logger.warning(f"Skipping malformed runtime event line: {raw_line.strip()}")
+                return None
+            try:
+                return RuntimeEvent(**item)
+            except TypeError as e:
+                logger.warning(f"Skipping malformed runtime event payload: {e}")
+                return None
+
         if not follow:
             raw = JSONStore.load(self.runtime_path)
             logger.info(f"Starting runtime telemetry stream ({len(raw)} events)...")
             for item in raw:
-                try:
-                    event = RuntimeEvent(**item)
-                except TypeError as e:
-                    logger.warning(f"Skipping malformed runtime event: {e}")
+                event = _parse_event(json.dumps(item))
+                if event is None:
                     continue
                 if delay:
                     time.sleep(delay)
@@ -107,27 +122,31 @@ class IngestionEngine:
 
         logger.info(f"Tailing runtime telemetry log: {self.runtime_path}")
         with open(self.runtime_path, "r", encoding="utf-8") as handle:
-            handle.seek(0, os.SEEK_END)
-            while True:
-                line = handle.readline()
-                if line:
-                    try:
-                        item = json.loads(line)
-                    except json.JSONDecodeError:
-                        logger.warning(f"Skipping malformed runtime event line: {line.strip()}")
-                        continue
-                    try:
-                        event = RuntimeEvent(**item)
-                    except TypeError as e:
-                        logger.warning(f"Skipping malformed runtime event payload: {e}")
-                        continue
+            # Read the current file first so a live simulation starts with the
+            # existing events before waiting for new appends.
+            for raw_line in handle:
+                event = _parse_event(raw_line)
+                if event is not None:
                     if delay:
                         time.sleep(delay)
                     yield event
+
+            started_at = time.monotonic()
+            while True:
+                line = handle.readline()
+                if line:
+                    event = _parse_event(line)
+                    if event is not None:
+                        if delay:
+                            time.sleep(delay)
+                        yield event
                     continue
+
+                if max_wait is not None and (time.monotonic() - started_at) >= max_wait:
+                    break
                 time.sleep(poll_interval)
 
-    def stream_runtime_events_threaded(self, delay: float = 0.0) -> "queue.Queue":
+    def stream_runtime_events_threaded(self, delay: float = 0.0, follow: bool = False) -> "queue.Queue":
         """
         Runs the runtime event stream on a background thread and pushes
         events onto a thread-safe Queue, demonstrating how a real
@@ -138,9 +157,12 @@ class IngestionEngine:
         event_queue: "queue.Queue" = queue.Queue()
 
         def _producer():
-            for event in self.stream_runtime_events(delay=delay):
-                event_queue.put(event)
-            event_queue.put(None)  # sentinel: stream finished
+            try:
+                for event in self.stream_runtime_events(delay=delay, follow=follow, poll_interval=0.25):
+                    event_queue.put(event)
+            except Exception as exc:  # pragma: no cover
+                logger.exception(f"Runtime event stream failed: {exc}")
+            event_queue.put(None)
 
         thread = threading.Thread(target=_producer, daemon=True, name="RuntimeEventProducer")
         thread.start()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 main.py
---------
+---------
 Container Security Posture Management (CSPM) Framework
 Entry point that wires together all four engines:
 
@@ -88,38 +88,8 @@ def print_dashboard(rows):
     print("=" * len(header) + "\n")
 
 
-def run(containers_path, vulns_path, events_path, stream_mode: bool):
-    logger.info("=== CSPM Framework starting ===")
-    _reset_outputs()
-
-    # ---------------- Layer 1: Ingestion ----------------
-    ingestion = IngestionEngine(containers_path, vulns_path, events_path)
-    containers = ingestion.load_container_configs()
-    vuln_scans = ingestion.load_vuln_scans()
-
-    if stream_mode:
-        print("Streaming live runtime telemetry (tailing Falco/JSONL log)...\n")
-        runtime_events = []
-        try:
-            for event in ingestion.stream_runtime_events(delay=0.15, follow=True, poll_interval=0.25):
-                print(f"  [stream] {event.timestamp} {event.container_id:<24} "
-                      f"{event.event_type:<16} suspicious={event.suspicious}")
-                runtime_events.append(event)
-        except KeyboardInterrupt:
-            print("\nStopping live stream.")
-        print()
-    else:
-        runtime_events = list(ingestion.stream_runtime_events(delay=0.0, follow=False))
-
-    # ---------------- Layer 2: Analysis ----------------
-    policy_engine = PolicyEngine(POLICY_PATH)
-    anomaly_detector = AnomalyDetector(contamination=0.3)
-    anomaly_results = anomaly_detector.analyze(runtime_events)
-
-    # ---------------- Layer 2b + 3: Risk Scoring + Mitigation ----------------
-    risk_engine = RiskEngine(environment_multipliers=policy_engine.environment_multipliers)
-    mitigation_engine = MitigationEngine(ALERTS_OUTPUT, WEBHOOK_OUTPUT)
-
+def _evaluate_all_containers(containers, vuln_scans, policy_engine, risk_engine, mitigation_engine, anomaly_results):
+    """Compute risk for all known containers for the current event batch."""
     dashboard_rows = []
     full_report = []
 
@@ -161,6 +131,61 @@ def run(containers_path, vulns_path, events_path, stream_mode: bool):
         )
 
     dashboard_rows.sort(key=lambda r: r["risk"], reverse=True)
+    return dashboard_rows, full_report
+
+
+def run(containers_path, vulns_path, events_path, stream_mode: bool):
+    logger.info("=== CSPM Framework starting ===")
+    _reset_outputs()
+
+    # ---------------- Layer 1: Ingestion ----------------
+    ingestion = IngestionEngine(containers_path, vulns_path, events_path)
+    containers = ingestion.load_container_configs()
+    vuln_scans = ingestion.load_vuln_scans()
+
+    # Shared analysis components for both batch and streaming modes.
+    policy_engine = PolicyEngine(POLICY_PATH)
+    anomaly_detector = AnomalyDetector(contamination=0.3)
+    risk_engine = RiskEngine(environment_multipliers=policy_engine.environment_multipliers)
+    mitigation_engine = MitigationEngine(ALERTS_OUTPUT, WEBHOOK_OUTPUT)
+
+    if stream_mode:
+        print("Streaming live runtime telemetry (tailing Falco/JSONL log)...\n")
+        runtime_events = []
+        event_queue = ingestion.stream_runtime_events_threaded(delay=0.0)
+        try:
+            while True:
+                event = event_queue.get(timeout=0.5)
+                if event is None:
+                    break
+                runtime_events.append(event)
+                anomaly_results = anomaly_detector.analyze(runtime_events)
+                dashboard_rows, _ = _evaluate_all_containers(
+                    containers,
+                    vuln_scans,
+                    policy_engine,
+                    risk_engine,
+                    mitigation_engine,
+                    anomaly_results,
+                )
+                print_dashboard(dashboard_rows)
+                print(f"[stream] last event: {event.container_id} | {event.event_type} | suspicious={event.suspicious}\n")
+        except KeyboardInterrupt:
+            print("\nStopping live stream.")
+        print()
+        return
+
+    # ---------------- Batch mode ----------------
+    runtime_events = list(ingestion.stream_runtime_events(delay=0.0, follow=False))
+    anomaly_results = anomaly_detector.analyze(runtime_events)
+    dashboard_rows, full_report = _evaluate_all_containers(
+        containers,
+        vuln_scans,
+        policy_engine,
+        risk_engine,
+        mitigation_engine,
+        anomaly_results,
+    )
     print_dashboard(dashboard_rows)
 
     JSONStore.save(RISK_REPORT_OUTPUT, full_report)

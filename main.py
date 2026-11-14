@@ -11,7 +11,7 @@ and renders a CLI-based security dashboard summarizing the results.
 
 Usage:
     python main.py
-    python main.py --stream            # simulate real-time runtime event streaming
+    python main.py --stream            # simulate live runtime event streaming
     python main.py --containers PATH --vulns PATH --events PATH
 """
 
@@ -20,10 +20,10 @@ import os
 import sys
 import time
 
+from engines.analysis_engine import AnomalyDetector, PolicyEngine
 from engines.ingestion_engine import IngestionEngine
-from engines.analysis_engine import PolicyEngine, AnomalyDetector
-from engines.risk_engine import RiskEngine
 from engines.mitigation_engine import MitigationEngine
+from engines.risk_engine import RiskEngine
 from storage.json_store import JSONStore
 from utils.logger import get_logger
 
@@ -39,10 +39,10 @@ WEBHOOK_OUTPUT = os.path.join(BASE_DIR, "output", "webhook_notifications.json")
 RISK_REPORT_OUTPUT = os.path.join(BASE_DIR, "output", "risk_report.json")
 
 _CLASSIFICATION_COLOR = {
-    "Critical": "\033[91m",   # red
-    "High": "\033[93m",       # yellow
-    "Medium": "\033[94m",     # blue
-    "Low": "\033[92m",        # green
+    "Critical": "\033[91m",
+    "High": "\033[93m",
+    "Medium": "\033[94m",
+    "Low": "\033[92m",
 }
 _RESET = "\033[0m"
 
@@ -138,12 +138,10 @@ def run(containers_path, vulns_path, events_path, stream_mode: bool):
     logger.info("=== CSPM Framework starting ===")
     _reset_outputs()
 
-    # ---------------- Layer 1: Ingestion ----------------
     ingestion = IngestionEngine(containers_path, vulns_path, events_path)
     containers = ingestion.load_container_configs()
     vuln_scans = ingestion.load_vuln_scans()
 
-    # Shared analysis components for both batch and streaming modes.
     policy_engine = PolicyEngine(POLICY_PATH)
     anomaly_detector = AnomalyDetector(contamination=0.3)
     risk_engine = RiskEngine(environment_multipliers=policy_engine.environment_multipliers)
@@ -152,12 +150,14 @@ def run(containers_path, vulns_path, events_path, stream_mode: bool):
     if stream_mode:
         print("Streaming live runtime telemetry (tailing Falco/JSONL log)...\n")
         runtime_events = []
-        event_queue = ingestion.stream_runtime_events_threaded(delay=0.0)
+        event_queue = ingestion.stream_runtime_events_threaded(delay=0.0, follow=True)
         try:
             while True:
                 event = event_queue.get(timeout=0.5)
                 if event is None:
-                    break
+                    # The follow stream is designed to stay open; a sentinel indicates a
+                    # producer shutdown, but in this simulation we keep the process alive.
+                    continue
                 runtime_events.append(event)
                 anomaly_results = anomaly_detector.analyze(runtime_events)
                 dashboard_rows, _ = _evaluate_all_containers(
@@ -175,7 +175,6 @@ def run(containers_path, vulns_path, events_path, stream_mode: bool):
         print()
         return
 
-    # ---------------- Batch mode ----------------
     runtime_events = list(ingestion.stream_runtime_events(delay=0.0, follow=False))
     anomaly_results = anomaly_detector.analyze(runtime_events)
     dashboard_rows, full_report = _evaluate_all_containers(
@@ -209,7 +208,7 @@ if __name__ == "__main__":
     start = time.time()
     try:
         run(args.containers, args.vulns, args.events, args.stream)
-    except Exception as e:  # top-level safety net
+    except Exception as e:
         logger.critical(f"CSPM run failed with unhandled exception: {e}", exc_info=True)
         sys.exit(1)
     logger.info(f"Total execution time: {time.time() - start:.2f}s")
